@@ -1,0 +1,32 @@
+# Python
+server/.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+server/.env
+client/.env.local
+
+# Alembic (keep versions tracked, ignore nothing here by default)
+
+# Next.js
+client/.next/
+client/out/
+client/node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
