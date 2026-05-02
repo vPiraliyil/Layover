@@ -7,8 +7,8 @@ load_dotenv()
 
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
-from server.database import async_session
-from server.models import Airport
+from database import async_session
+from models import Airport
 
 AIRPORTS = [
     {"iata_code": "YYZ", "name": "Toronto Pearson International Airport", "city": "Toronto", "terminal_count": 2},
