@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -26,14 +26,15 @@ class AirportRead(AirportBase):
 
 
 class POIBase(BaseModel):
-    airport_id: uuid.UUID
+    airport_iata: str
+    terminal: str
     name: str
-    category: Literal["food", "drink", "shopping", "lounge", "gate", "other"]
-    terminal: str | None = None
-    gate_area: str | None = None
-    lat: float | None = None
-    lng: float | None = None
-    meta: dict[str, Any] | None = None
+    category: str
+    lat: float
+    lng: float
+    google_place_id: str
+    rating: float | None = None
+    address: str | None = None
 
 
 class POICreate(POIBase):
@@ -44,14 +45,17 @@ class POIRead(POIBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
-    created_at: datetime
+    cached_at: datetime
 
 
 class ItineraryBase(BaseModel):
-    user_id: uuid.UUID
-    airport_id: uuid.UUID
-    layover_duration_minutes: int
-    stops: list[Any] = []
+    airport_iata: str
+    terminal: str
+    duration_minutes: int
+    preferences: list[str] = []
+    itinerary_json: list[Any] = []
+    route_geojson: dict[str, Any] | None = None
+    user_id: uuid.UUID | None = None
 
 
 class ItineraryCreate(ItineraryBase):
@@ -63,12 +67,11 @@ class ItineraryRead(ItineraryBase):
 
     id: uuid.UUID
     created_at: datetime
-    updated_at: datetime
 
 
 class ChatMessageBase(BaseModel):
     itinerary_id: uuid.UUID
-    role: Literal["user", "assistant"]
+    role: str
     content: str
 
 

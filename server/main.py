@@ -6,7 +6,9 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routers.airports import router as airports_router
 from routers.auth import router as auth_router
+from routers.pois import router as pois_router
 
 CLIENT_URL = os.environ.get("CLIENT_URL", "http://localhost:3000")
 
@@ -21,8 +23,15 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(airports_router, prefix="/airports")
+app.include_router(pois_router, prefix="/pois")
 
 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/debug/routes")
+def list_routes():
+    return [{"path": route.path, "name": route.name} for route in app.routes]

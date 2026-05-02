@@ -50,7 +50,19 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\server\" -Exclude \".venv\", \"alembic\" | Where-Object {$_.PSIsContainer} | Select-Object Name)",
       "PowerShell(ls \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\server\" | Where-Object {$_.PSIsContainer} | Select-Object Name)",
       "Bash(find C:\\\\\\\\Users\\\\\\\\vpira\\\\\\\\OneDrive\\\\\\\\Desktop\\\\\\\\Projects\\\\\\\\Layover\\\\\\\\server *)",
-      "Bash(.venv/Scripts/uvicorn main:app --reload --port 8000)"
+      "Bash(.venv/Scripts/uvicorn main:app --reload --port 8000)",
+      "Bash(.venv/Scripts/python.exe -c \"import httpx, sqlalchemy, fastapi; print\\('deps ok'\\)\")",
+      "Bash(.venv/Scripts/python.exe -c ' *)",
+      "Bash(.venv/Scripts/alembic revision *)",
+      "Bash(python3 -c \"import sys,json; [print\\(p\\) for p in json.load\\(sys.stdin\\)['paths'].keys\\(\\)]\")",
+      "Bash(python.exe -c \"import sys,json; [print\\(p\\) for p in json.load\\(sys.stdin\\)['paths'].keys\\(\\)]\")",
+      "PowerShell(netstat *)",
+      "PowerShell(Stop-Process *)",
+      "PowerShell(taskkill *)",
+      "Bash(.venv/Scripts/uvicorn main:app --port 8000)",
+      "Bash(.venv/Scripts/uvicorn main:app --port 8001)",
+      "Bash(.venv/Scripts/python.exe -c \"import sys,json; [print\\(p\\) for p in json.load\\(sys.stdin\\)['paths'].keys\\(\\)]\")",
+      "Bash(python.exe -c \"import urllib.request,json; d=json.load\\(urllib.request.urlopen\\('http://localhost:8001/openapi.json'\\)\\); [print\\(p\\) for p in d['paths'].keys\\(\\)]\")"
     ]
   }
 }

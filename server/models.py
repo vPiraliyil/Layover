@@ -10,15 +10,6 @@ class Base(DeclarativeBase):
     pass
 
 
-class POICategory(enum.Enum):
-    food = "food"
-    drink = "drink"
-    shopping = "shopping"
-    lounge = "lounge"
-    gate = "gate"
-    other = "other"
-
-
 class MessageRole(enum.Enum):
     user = "user"
     assistant = "assistant"
@@ -34,16 +25,16 @@ class Airport(Base):
         server_default=text("gen_random_uuid()"),
     )
     iata_code = mapped_column(String(3), unique=True, nullable=False)
-    name = mapped_column(String, nullable=False)
-    city = mapped_column(String, nullable=False)
-    terminal_count = mapped_column(Integer, nullable=False)
+    name = mapped_column(String(150), nullable=False)
+    city = mapped_column(String(100), nullable=False)
+    terminal_count = mapped_column(Integer, nullable=False, server_default=text("1"))
     created_at = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
 
 class POI(Base):
-    __tablename__ = "points_of_interest"
+    __tablename__ = "pois"
 
     id = mapped_column(
         UUID(as_uuid=True),
@@ -51,17 +42,16 @@ class POI(Base):
         default=uuid.uuid4,
         server_default=text("gen_random_uuid()"),
     )
-    airport_id = mapped_column(
-        UUID(as_uuid=True), ForeignKey("airports.id"), nullable=False
-    )
-    name = mapped_column(String, nullable=False)
-    category = mapped_column(Enum(POICategory), nullable=False)
-    terminal = mapped_column(String, nullable=True)
-    gate_area = mapped_column(String, nullable=True)
-    lat = mapped_column(Float, nullable=True)
-    lng = mapped_column(Float, nullable=True)
-    meta = mapped_column(JSONB, name="metadata", nullable=True)
-    created_at = mapped_column(
+    airport_iata = mapped_column(String(3), ForeignKey("airports.iata_code"), nullable=False)
+    terminal = mapped_column(String(20), nullable=False)
+    name = mapped_column(String(150), nullable=False)
+    category = mapped_column(String(50), nullable=False)
+    lat = mapped_column(Float, nullable=False)
+    lng = mapped_column(Float, nullable=False)
+    google_place_id = mapped_column(String(255), unique=True, nullable=False)
+    rating = mapped_column(Float, nullable=True)
+    address = mapped_column(Text, nullable=True)
+    cached_at = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
@@ -75,20 +65,15 @@ class Itinerary(Base):
         default=uuid.uuid4,
         server_default=text("gen_random_uuid()"),
     )
-    user_id = mapped_column(UUID(as_uuid=True), nullable=False)
-    airport_id = mapped_column(
-        UUID(as_uuid=True), ForeignKey("airports.id"), nullable=False
-    )
-    layover_duration_minutes = mapped_column(Integer, nullable=False)
-    stops = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    user_id = mapped_column(UUID(as_uuid=True), nullable=True)
+    airport_iata = mapped_column(String(3), ForeignKey("airports.iata_code"), nullable=False)
+    terminal = mapped_column(String(20), nullable=False)
+    duration_minutes = mapped_column(Integer, nullable=False)
+    preferences = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    itinerary_json = mapped_column(JSONB, nullable=False, server_default=text("'[]'::jsonb"))
+    route_geojson = mapped_column(JSONB, nullable=True)
     created_at = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False,
     )
 
 
