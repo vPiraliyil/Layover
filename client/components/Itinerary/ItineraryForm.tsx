@@ -30,6 +30,7 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
   const [airports, setAirports] = useState<Airport[]>([])
   const [airport, setAirport] = useState('')
   const [terminal, setTerminal] = useState('')
+  const [gate, setGate] = useState('')
   const [duration, setDuration] = useState(120)
   const [prefs, setPrefs] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
@@ -62,6 +63,7 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
         body: JSON.stringify({
           airport,
           terminal,
+          gate: gate.trim() || null,
           duration_minutes: duration,
           preferences: prefs,
         }),
@@ -104,6 +106,17 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
           value={terminal}
           onChange={e => setTerminal(e.target.value)}
           placeholder="e.g. Terminal 1"
+          className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#0A1628] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-[#0A1628]">Gate or arrival area</label>
+        <input
+          type="text"
+          value={gate}
+          onChange={e => setGate(e.target.value)}
+          placeholder="e.g. Gate B12 (optional)"
           className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#0A1628] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
         />
       </div>

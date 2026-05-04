@@ -23,6 +23,7 @@ class GenerateRequest(BaseModel):
     terminal: str
     duration_minutes: int
     preferences: list[str] = []
+    gate: str | None = None
 
 
 class PatchRequest(BaseModel):
@@ -42,6 +43,7 @@ async def create_itinerary(
     terminal = body.terminal
     duration_minutes = body.duration_minutes
     preferences = body.preferences
+    gate = body.gate
 
     if duration_minutes < 45:
         raise HTTPException(status_code=400, detail="Layover must be at least 45 minutes")
@@ -57,7 +59,7 @@ async def create_itinerary(
         raise HTTPException(status_code=404, detail="No POIs found for this airport and preferences")
 
     try:
-        stops = generate_itinerary(pois, preferences, duration_minutes)
+        stops = generate_itinerary(pois, preferences, duration_minutes, gate)
     except ValueError as exc:
         logger.error("Claude generation failed: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc))

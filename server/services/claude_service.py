@@ -69,11 +69,18 @@ def generate_itinerary(
     pois: list[dict],
     preferences: list[str],
     duration_minutes: int,
+    gate: str | None = None,
 ) -> list[dict]:
+    gate_line = (
+        f"Arrival gate/area: {gate}. Prioritize stops closest to this area and in the same terminal. Never suggest stops in a different terminal.\n"
+        if gate
+        else ""
+    )
     user_message = (
         f"Layover duration: {duration_minutes} minutes\n"
-        f"Preferences: {', '.join(preferences)}\n\n"
-        f"Available POIs:\n{json.dumps(pois, indent=2)}"
+        f"Preferences: {', '.join(preferences)}\n"
+        f"{gate_line}"
+        f"\nAvailable POIs:\n{json.dumps(pois, indent=2)}"
     )
 
     response = _client().messages.create(
