@@ -22,7 +22,9 @@ STOP_SCHEMA = """
 }
 """
 
-GENERATE_SYSTEM_PROMPT = f"""You are an airport layover itinerary planner.
+def _build_generate_system_prompt(required_prefs: list[str]) -> str:
+    prefs_str = ", ".join(required_prefs)
+    return f"""You are an airport layover itinerary planner.
 
 Given a list of points of interest (POIs) and the traveler's preferences, output ONLY a valid JSON array of stops.
 
@@ -31,9 +33,12 @@ STOP COUNT — non-negotiable based on layover duration:
 - 91–150 min layover: exactly 3 stops
 - 151+ min layover: exactly 4 stops
 
+REQUIRED PREFERENCES — non-negotiable:
+You MUST include exactly one stop for each of the following preferences: {prefs_str}. This is non-negotiable. If you cannot find a perfect match for a preference in the POI list, include the best available POI from the provided list anyway. Never omit a required preference category from the output.
+
 CATEGORY DIVERSITY — non-negotiable:
 - Maximum 1 stop per category. Never pick two restaurants, two bars, two shops, etc.
-- If the traveler selected only one preference, fill the remaining stops with complementary categories from the available POIs (e.g. food → add drinks or shopping; quiet → add food or walking).
+- If stop count exceeds the number of required preferences, fill remaining stops with complementary categories from the available POIs.
 - Every stop must feel meaningfully different from the others.
 
 Other rules:
@@ -72,6 +77,16 @@ def generate_itinerary(
     duration_minutes: int,
     gate: str | None = None,
 ) -> list[dict]:
+    # Determine which preferences have POIs available — skip those that don't
+    categories_in_pois = {p["category"] for p in pois}
+    required_prefs = [p for p in preferences if p in categories_in_pois]
+    skipped = [p for p in preferences if p not in categories_in_pois]
+    for s in skipped:
+        logger.warning("No POIs found for preference '%s' — excluding from required list", s)
+    if not required_prefs:
+        # All preferences have no POIs; pass original list and let Claude do its best
+        required_prefs = list(preferences)
+
     gate_line = (
         f"Arrival gate/area: {gate}. Prioritize stops closest to this area and in the same terminal. Never suggest stops in a different terminal.\n"
         if gate
@@ -87,7 +102,7 @@ def generate_itinerary(
     response = _client().messages.create(
         model=MODEL,
         max_tokens=2048,
-        system=GENERATE_SYSTEM_PROMPT,
+        system=_build_generate_system_prompt(required_prefs),
         messages=[{"role": "user", "content": user_message}],
     )
 
@@ -101,6 +116,15 @@ def generate_itinerary(
 
     if not isinstance(stops, list):
         raise ValueError("Claude response is not a JSON array")
+
+    # Validate every required preference appears at least once in the returned stops
+    returned_categories = {s.get("category") for s in stops}
+    missing = [p for p in required_prefs if p not in returned_categories]
+    if missing:
+        raise ValueError(
+            f"Claude omitted stops for required preferences: {missing}. "
+            f"Returned categories: {sorted(returned_categories)}"
+        )
 
     return stops
 

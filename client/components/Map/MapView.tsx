@@ -41,7 +41,6 @@ function stopsToFeatureCollection(
 export default function MapView({ stops, routeGeoJson }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
-  const initialFitDoneRef = useRef(false)
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -52,8 +51,8 @@ export default function MapView({ stops, routeGeoJson }: MapViewProps) {
     const map = new mapboxgl.Map({
       container: containerRef.current,
       style: 'mapbox://styles/mapbox/light-v11',
-      center: [-73.7781, 40.6413],
-      zoom: 13,
+      center: [0, 20],
+      zoom: 1.5,
       scrollZoom: false,
     })
 
@@ -126,7 +125,6 @@ export default function MapView({ stops, routeGeoJson }: MapViewProps) {
     return () => {
       map.remove()
       mapRef.current = null
-      initialFitDoneRef.current = false
     }
   }, [])
 
@@ -145,11 +143,12 @@ export default function MapView({ stops, routeGeoJson }: MapViewProps) {
     )
     stopsSource.setData(stopsToFeatureCollection(stops))
 
-    if (stops.length > 0 && !initialFitDoneRef.current) {
+    if (stops.length > 0) {
       const bounds = new mapboxgl.LngLatBounds()
       stops.forEach((s) => bounds.extend([s.lng, s.lat]))
-      map.fitBounds(bounds, { padding: 60, maxZoom: 17 })
-      initialFitDoneRef.current = true
+      map.fitBounds(bounds, { padding: 80, maxZoom: 17 })
+    } else {
+      map.flyTo({ center: [0, 20], zoom: 1.5, duration: 1000 })
     }
   }, [stops, routeGeoJson])
 

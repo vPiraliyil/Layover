@@ -104,6 +104,7 @@ async def fetch_pois_from_places(
                 if fallback_resp.is_success:
                     places = fallback_resp.json().get("places", [])
 
+            pref_start = len(rows)
             for place in places:
                 pid = place.get("id")
                 if not pid or pid in seen:
@@ -128,6 +129,7 @@ async def fetch_pois_from_places(
                     "address": place.get("formattedAddress"),
                     "cached_at": datetime.now(timezone.utc),
                 })
+            logger.info("places fetch: pref=%s found=%d", pref, len(rows) - pref_start)
 
     if not rows:
         return []
@@ -175,8 +177,11 @@ async def get_pois_for_itinerary(
     cached = result.scalars().all()
 
     if len(cached) >= 5:
-        logger.info("cache hit: %s terminal %s %s", airport_iata, terminal, preferences)
-        return [_poi_to_dict(p) for p in cached]
+        pois = [_poi_to_dict(p) for p in cached]
+        for pref in preferences:
+            count = sum(1 for p in pois if p["category"] == pref)
+            logger.info("cache hit: %s/%s pref=%s count=%d", airport_iata, terminal, pref, count)
+        return pois
 
     logger.info("cache miss: %s terminal %s %s", airport_iata, terminal, preferences)
     return await fetch_pois_from_places(airport_iata, terminal, preferences, db)
