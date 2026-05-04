@@ -21,25 +21,26 @@ AIRPORT_COORDS: dict[str, tuple[float, float]] = {
     "LAX": (33.9425, -118.4081),
 }
 
-AIRPORT_NAMES: dict[str, str] = {
-    "YYZ": "Toronto Pearson Airport",
-    "JFK": "JFK Airport",
-    "LAX": "LAX Airport",
-}
-
-# Preference tag → Places API (New) includedTypes list (empty = no type filter)
+# Preference tag → Places API (New) includedTypes
+# Only valid searchNearby types used here — no custom/invalid fields
 PREFERENCE_TYPE_MAP: dict[str, list[str]] = {
     "food": ["restaurant", "cafe", "meal_takeaway"],
     "drinks": ["bar", "cafe"],
     "shopping": ["clothing_store", "book_store", "convenience_store"],
-    "quiet": ["lounge", "cafe"],  # broad airport-friendly types; keywords added at fetch time
-    "walking": [],  # no type filter; kept tight with airport keyword
+    "quiet": ["cafe", "book_store", "library"],
+    "walking": [],  # no type filter; radius tightened below
 }
 
-# Per-preference overrides applied when building the Places API request body
+# Per-preference overrides — only fields valid in Places API (New) searchNearby,
+# plus our internal "radius" key used for locationRestriction
 PREFERENCE_OVERRIDES: dict[str, dict] = {
-    "quiet": {"maxResultCount": 5, "includedKeywords": ["quiet", "lounge"]},
-    "walking": {"radius": 800.0, "useAirportKeyword": True},
+    "quiet": {"maxResultCount": 10},
+    "walking": {"radius": 800.0},
+}
+
+# Fallback types used when primary types return 0 results
+PREFERENCE_FALLBACK_TYPES: dict[str, list[str]] = {
+    "quiet": ["cafe"],
 }
 
 
@@ -64,8 +65,6 @@ async def fetch_pois_from_places(
         "X-Goog-FieldMask": FIELD_MASK,
     }
 
-    airport_name = AIRPORT_NAMES.get(iata, "")
-
     async with httpx.AsyncClient(timeout=10.0) as client:
         for pref in preferences:
             if pref not in PREFERENCE_TYPE_MAP:
@@ -87,10 +86,6 @@ async def fetch_pois_from_places(
             }
             if types:
                 body["includedTypes"] = types
-            if "includedKeywords" in overrides:
-                body["includedKeywords"] = overrides["includedKeywords"]
-            if overrides.get("useAirportKeyword") and airport_name:
-                body["includedKeywords"] = [airport_name]
 
             resp = await client.post(PLACES_NEARBY_URL, json=body, headers=headers)
 
@@ -98,7 +93,18 @@ async def fetch_pois_from_places(
                 logger.warning("Places API error %s for pref=%s: %s", resp.status_code, pref, resp.text[:300])
                 continue
 
-            for place in resp.json().get("places", []):
+            places = resp.json().get("places", [])
+
+            # If primary types returned nothing and a fallback is defined, retry once
+            if not places and pref in PREFERENCE_FALLBACK_TYPES:
+                fallback_types = PREFERENCE_FALLBACK_TYPES[pref]
+                logger.info("pref=%s returned 0 results, retrying with fallback types %s", pref, fallback_types)
+                fallback_body = {**body, "includedTypes": fallback_types}
+                fallback_resp = await client.post(PLACES_NEARBY_URL, json=fallback_body, headers=headers)
+                if fallback_resp.is_success:
+                    places = fallback_resp.json().get("places", [])
+
+            for place in places:
                 pid = place.get("id")
                 if not pid or pid in seen:
                     continue
@@ -114,7 +120,7 @@ async def fetch_pois_from_places(
                     "airport_iata": iata,
                     "terminal": terminal,
                     "name": place.get("displayName", {}).get("text", "Unknown"),
-                    "category": pref,
+                    "category": pref,  # always tagged with the preference, even fallback results
                     "lat": place_lat,
                     "lng": place_lng,
                     "google_place_id": pid,
