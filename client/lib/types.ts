@@ -21,10 +21,14 @@ export interface POI {
 }
 
 export interface ItineraryStop {
-  poi_id: string
-  order: number
+  stop_number: number
+  name: string
+  category: string
+  description: string
   duration_minutes: number
-  notes?: string
+  lat: number
+  lng: number
+  walking_minutes_to_next: number
 }
 
 export interface Itinerary {
