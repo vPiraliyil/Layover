@@ -37,6 +37,7 @@ CATEGORY DIVERSITY — non-negotiable:
 - Every stop must feel meaningfully different from the others.
 
 Other rules:
+- All stops must be inside the airport terminal. Never suggest locations that require leaving the secure area or going outdoors.
 - Output ONLY the raw JSON array. No prose, no markdown fences, no extra keys, no explanation.
 - Each element must exactly match this schema:
 {STOP_SCHEMA}

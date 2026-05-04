@@ -21,13 +21,25 @@ AIRPORT_COORDS: dict[str, tuple[float, float]] = {
     "LAX": (33.9425, -118.4081),
 }
 
+AIRPORT_NAMES: dict[str, str] = {
+    "YYZ": "Toronto Pearson Airport",
+    "JFK": "JFK Airport",
+    "LAX": "LAX Airport",
+}
+
 # Preference tag → Places API (New) includedTypes list (empty = no type filter)
 PREFERENCE_TYPE_MAP: dict[str, list[str]] = {
     "food": ["restaurant", "cafe", "meal_takeaway"],
     "drinks": ["bar", "cafe"],
     "shopping": ["clothing_store", "book_store", "convenience_store"],
-    "quiet": ["library", "spa"],
-    "walking": [],  # no type filter; radius expanded to 1500m
+    "quiet": ["lounge", "cafe"],  # broad airport-friendly types; keywords added at fetch time
+    "walking": [],  # no type filter; kept tight with airport keyword
+}
+
+# Per-preference overrides applied when building the Places API request body
+PREFERENCE_OVERRIDES: dict[str, dict] = {
+    "quiet": {"maxResultCount": 5, "includedKeywords": ["quiet", "lounge"]},
+    "walking": {"radius": 800.0, "useAirportKeyword": True},
 }
 
 
@@ -52,13 +64,17 @@ async def fetch_pois_from_places(
         "X-Goog-FieldMask": FIELD_MASK,
     }
 
+    airport_name = AIRPORT_NAMES.get(iata, "")
+
     async with httpx.AsyncClient(timeout=10.0) as client:
         for pref in preferences:
             if pref not in PREFERENCE_TYPE_MAP:
                 continue
 
             types = PREFERENCE_TYPE_MAP[pref]
-            radius = 1500.0 if pref == "walking" else 1000.0
+            overrides = PREFERENCE_OVERRIDES.get(pref, {})
+            radius = overrides.get("radius", 1000.0)
+            max_results = overrides.get("maxResultCount", 20)
 
             body: dict = {
                 "locationRestriction": {
@@ -67,10 +83,14 @@ async def fetch_pois_from_places(
                         "radius": radius,
                     }
                 },
-                "maxResultCount": 20,
+                "maxResultCount": max_results,
             }
             if types:
                 body["includedTypes"] = types
+            if "includedKeywords" in overrides:
+                body["includedKeywords"] = overrides["includedKeywords"]
+            if overrides.get("useAirportKeyword") and airport_name:
+                body["includedKeywords"] = [airport_name]
 
             resp = await client.post(PLACES_NEARBY_URL, json=body, headers=headers)
 
