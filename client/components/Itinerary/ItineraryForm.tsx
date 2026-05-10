@@ -28,6 +28,7 @@ interface Props {
 
 export default function ItineraryForm({ onItineraryGenerated }: Props) {
   const [airports, setAirports] = useState<Airport[]>([])
+  const [airportsError, setAirportsError] = useState<string | null>(null)
   const [airport, setAirport] = useState('')
   const [terminal, setTerminal] = useState('')
   const [gate, setGate] = useState('')
@@ -37,7 +38,12 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchAPI<Airport[]>('/airports').then(setAirports).catch(() => {})
+    fetchAPI<Airport[]>('/airports')
+      .then(setAirports)
+      .catch((err: unknown) => {
+        console.error('[ItineraryForm] airports fetch failed:', err)
+        setAirportsError('Could not load airports — is the server running?')
+      })
   }, [])
 
   function togglePref(p: string) {
@@ -85,18 +91,24 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
 
       <div className="space-y-1.5">
         <label className="block text-sm font-medium text-[#0A1628]">Airport</label>
-        <select
-          value={airport}
-          onChange={e => setAirport(e.target.value)}
-          className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#0A1628] bg-white focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
-        >
-          <option value="">Select airport…</option>
-          {airports.map(a => (
-            <option key={a.id} value={a.iata_code}>
-              {a.iata_code} — {a.name} ({a.city})
-            </option>
-          ))}
-        </select>
+        {airportsError ? (
+          <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            {airportsError}
+          </p>
+        ) : (
+          <select
+            value={airport}
+            onChange={e => setAirport(e.target.value)}
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#0A1628] bg-white focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+          >
+            <option value="">Select airport…</option>
+            {airports.map(a => (
+              <option key={a.id} value={a.iata_code}>
+                {a.iata_code} — {a.name} ({a.city})
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="space-y-1.5">

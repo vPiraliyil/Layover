@@ -11,6 +11,7 @@ export async function fetchAPI<T = unknown>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
+  console.log('[api] base URL:', process.env.NEXT_PUBLIC_API_URL, '| path:', path)
   const { data: { session } } = await supabase.auth.getSession()
 
   const headers: Record<string, string> = {
