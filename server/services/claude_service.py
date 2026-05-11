@@ -26,6 +26,8 @@ def _build_generate_system_prompt(required_prefs: list[str]) -> str:
     prefs_str = ", ".join(required_prefs)
     return f"""You are an airport layover itinerary planner.
 
+CRITICAL RULE: Every stop MUST be physically located inside the airport terminal. Do not suggest any location that requires leaving the secure airside area, going outdoors, or travelling to a different terminal. If no suitable POI exists in the provided list for a category, skip that category rather than suggesting an outside location.
+
 Given a list of points of interest (POIs) and the traveler's preferences, output ONLY a valid JSON array of stops.
 
 STOP COUNT — non-negotiable based on layover duration:
@@ -55,6 +57,8 @@ Other rules:
 def _build_patch_system_prompt(pois: list[dict]) -> str:
     pois_json = json.dumps(pois, indent=2)
     return f"""You are an airport layover itinerary editor.
+
+CRITICAL RULE: Every stop MUST be physically located inside the airport terminal. Do not suggest any location that requires leaving the secure airside area, going outdoors, or travelling to a different terminal. If no suitable POI exists in the provided list for a category, skip that category rather than suggesting an outside location.
 
 You will receive a current itinerary JSON array and a user request to modify it. Output ONLY the full updated JSON array.
 

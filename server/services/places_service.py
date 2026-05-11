@@ -35,7 +35,6 @@ PREFERENCE_TYPE_MAP: dict[str, list[str]] = {
 # plus our internal "radius" key used for locationRestriction
 PREFERENCE_OVERRIDES: dict[str, dict] = {
     "quiet": {"maxResultCount": 10},
-    "walking": {"radius": 800.0},
 }
 
 # Fallback types used when primary types return 0 results
@@ -72,7 +71,7 @@ async def fetch_pois_from_places(
 
             types = PREFERENCE_TYPE_MAP[pref]
             overrides = PREFERENCE_OVERRIDES.get(pref, {})
-            radius = overrides.get("radius", 1000.0)
+            radius = overrides.get("radius", 500.0)
             max_results = overrides.get("maxResultCount", 20)
 
             body: dict = {
