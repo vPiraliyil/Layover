@@ -1,14 +1,14 @@
 import logging
 import uuid
-from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
 from middleware.auth import optional_user
-from models import Itinerary
+from models import ChatMessage, Itinerary, MessageRole
 from services.claude_service import generate_itinerary, patch_itinerary
 from services.directions_service import get_route_geojson, get_walking_legs
 from services.places_service import get_pois_for_itinerary
@@ -27,9 +27,6 @@ class GenerateRequest(BaseModel):
 
 
 class PatchRequest(BaseModel):
-    itinerary_id: str
-    current_itinerary: list[dict[str, Any]]
-    chat_history: list[dict[str, Any]] = []
     user_message: str
 
 
@@ -111,16 +108,35 @@ async def create_itinerary(
     }
 
 
-@router.post("/patch")
+@router.patch("/{itinerary_id}/patch")
 async def patch_itinerary_route(
+    itinerary_id: str,
     body: PatchRequest,
     db: AsyncSession = Depends(get_db),
-    user: dict | None = Depends(optional_user),
 ):
     try:
+        itin_uuid = uuid.UUID(itinerary_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid itinerary ID")
+
+    itinerary_row = await db.get(Itinerary, itin_uuid)
+    if itinerary_row is None:
+        raise HTTPException(status_code=404, detail="Itinerary not found")
+
+    result = await db.execute(
+        select(ChatMessage)
+        .where(ChatMessage.itinerary_id == itin_uuid)
+        .order_by(ChatMessage.created_at.asc())
+    )
+    chat_rows = result.scalars().all()
+    chat_history = [{"role": row.role.value, "content": row.content} for row in chat_rows]
+
+    logger.info("Patch: itinerary=%s, history_len=%d, message=%r", itinerary_id, len(chat_history), body.user_message)
+
+    try:
         updated_stops = patch_itinerary(
-            body.current_itinerary,
-            body.chat_history,
+            itinerary_row.itinerary_json,
+            chat_history,
             body.user_message,
         )
     except ValueError as exc:
@@ -130,7 +146,35 @@ async def patch_itinerary_route(
     logger.info("Claude patch returned %d stops", len(updated_stops))
 
     updated_stops = await get_walking_legs(updated_stops)
+
+    try:
+        updated_stops = schedule_itinerary(
+            updated_stops,
+            itinerary_row.duration_minutes,
+            itinerary_row.preferences,
+        )
+    except SchedulingError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
     route_result = await get_route_geojson(updated_stops)
+
+    itinerary_row.itinerary_json = updated_stops
+    itinerary_row.route_geojson = route_result["geojson"]
+
+    db.add(ChatMessage(
+        itinerary_id=itin_uuid,
+        role=MessageRole.user,
+        content=body.user_message,
+    ))
+    db.add(ChatMessage(
+        itinerary_id=itin_uuid,
+        role=MessageRole.assistant,
+        content="Done! I've updated your itinerary.",
+    ))
+
+    await db.commit()
+
+    logger.info("Patch complete: itinerary=%s, stops=%d", itinerary_id, len(updated_stops))
 
     return {
         "stops": updated_stops,

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import ItineraryForm from '@/components/Itinerary/ItineraryForm'
 import ItineraryTimeline from '@/components/Itinerary/ItineraryTimeline'
+import ChatPanel from '@/components/Chat/ChatPanel'
 import type { ItineraryStop } from '@/lib/types'
 
 const MapView = dynamic(() => import('@/components/Map/MapView'), { ssr: false })
@@ -32,13 +33,17 @@ export default function AppPage() {
     })
   }
 
+  function handlePatch(data: { stops: ItineraryStop[]; routeGeoJson: GeoJSON.LineString | null; isRealRoute: boolean }) {
+    setItinerary(prev => prev ? { ...prev, ...data } : prev)
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       {/* Left panel */}
-      <div className="w-[40%] h-full bg-white overflow-y-auto border-r border-gray-200 flex flex-col">
+      <div className="w-[40%] h-full bg-white border-r border-gray-200 flex flex-col overflow-hidden">
         {itinerary ? (
           <>
-            <div className="px-6 pt-5 pb-0">
+            <div className="px-6 pt-5 pb-0 flex-shrink-0">
               <button
                 onClick={() => setItinerary(null)}
                 className="text-xs text-[#0066FF] hover:underline"
@@ -46,7 +51,13 @@ export default function AppPage() {
                 ← Start Over
               </button>
             </div>
-            <ItineraryTimeline stops={itinerary.stops} />
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <ItineraryTimeline stops={itinerary.stops} />
+            </div>
+            <ChatPanel
+              itineraryId={itinerary.id}
+              onItineraryPatched={handlePatch}
+            />
           </>
         ) : (
           <div className="flex-1 flex items-start justify-center pt-10">
