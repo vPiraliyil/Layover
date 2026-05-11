@@ -73,7 +73,9 @@ async def create_itinerary(
     except SchedulingError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
 
-    route_geojson = await get_route_geojson(stops)
+    route_result = await get_route_geojson(stops)
+    route_geojson = route_result["geojson"]
+    is_real_route = route_result["is_real_route"]
 
     user_id: uuid.UUID | None = None
     if user:
@@ -105,6 +107,7 @@ async def create_itinerary(
         "preferences": preferences,
         "stops": stops,
         "route_geojson": route_geojson,
+        "is_real_route": is_real_route,
     }
 
 
@@ -127,9 +130,10 @@ async def patch_itinerary_route(
     logger.info("Claude patch returned %d stops", len(updated_stops))
 
     updated_stops = await get_walking_legs(updated_stops)
-    route_geojson = await get_route_geojson(updated_stops)
+    route_result = await get_route_geojson(updated_stops)
 
     return {
         "stops": updated_stops,
-        "route_geojson": route_geojson,
+        "route_geojson": route_result["geojson"],
+        "is_real_route": route_result["is_real_route"],
     }

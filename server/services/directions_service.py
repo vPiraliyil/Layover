@@ -89,13 +89,13 @@ async def get_walking_legs(stops: list[dict]) -> list[dict]:
     return result
 
 
-async def get_route_geojson(stops: list[dict]) -> dict | None:
+async def get_route_geojson(stops: list[dict]) -> dict:
     if len(stops) < 2:
-        return None
+        return {"geojson": None, "is_real_route": False}
 
     route = await _fetch_directions(stops)
 
     if route is None:
-        return _straight_line_geojson(stops)
+        return {"geojson": _straight_line_geojson(stops), "is_real_route": False}
 
-    return route.get("geometry")
+    return {"geojson": route.get("geometry"), "is_real_route": True}

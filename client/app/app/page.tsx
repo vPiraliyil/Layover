@@ -12,6 +12,7 @@ interface ItineraryState {
   id: string
   stops: ItineraryStop[]
   routeGeoJson: GeoJSON.LineString | null
+  isRealRoute: boolean
 }
 
 export default function AppPage() {
@@ -21,11 +22,13 @@ export default function AppPage() {
     id: string
     stops: ItineraryStop[]
     route_geojson: GeoJSON.LineString | null
+    is_real_route: boolean
   }) {
     setItinerary({
       id: data.id,
       stops: data.stops,
       routeGeoJson: data.route_geojson,
+      isRealRoute: data.is_real_route,
     })
   }
 
@@ -57,6 +60,7 @@ export default function AppPage() {
         <MapView
           stops={itinerary?.stops ?? []}
           routeGeoJson={itinerary?.routeGeoJson ?? null}
+          isRealRoute={itinerary?.isRealRoute ?? false}
         />
       </div>
     </div>

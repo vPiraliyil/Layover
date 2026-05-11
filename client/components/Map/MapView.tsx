@@ -7,6 +7,7 @@ import type { ItineraryStop } from '@/lib/types'
 interface MapViewProps {
   stops: ItineraryStop[]
   routeGeoJson: GeoJSON.LineString | null
+  isRealRoute: boolean
 }
 
 const EMPTY_LINE: GeoJSON.Feature<GeoJSON.LineString> = {
@@ -38,7 +39,7 @@ function stopsToFeatureCollection(
   }
 }
 
-export default function MapView({ stops, routeGeoJson }: MapViewProps) {
+export default function MapView({ stops, routeGeoJson, isRealRoute }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
 
@@ -64,7 +65,7 @@ export default function MapView({ stops, routeGeoJson }: MapViewProps) {
         id: 'route',
         type: 'line',
         source: 'route',
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        layout: { visibility: 'none', 'line-cap': 'round', 'line-join': 'round' },
         paint: { 'line-color': '#0066FF', 'line-width': 4 },
       })
 
@@ -136,11 +137,14 @@ export default function MapView({ stops, routeGeoJson }: MapViewProps) {
     const stopsSource = map.getSource('stops') as mapboxgl.GeoJSONSource | undefined
     if (!routeSource || !stopsSource) return
 
-    routeSource.setData(
-      routeGeoJson
-        ? { type: 'Feature', properties: {}, geometry: routeGeoJson }
-        : EMPTY_LINE
-    )
+    if (isRealRoute && routeGeoJson) {
+      routeSource.setData({ type: 'Feature', properties: {}, geometry: routeGeoJson })
+      map.setLayoutProperty('route', 'visibility', 'visible')
+    } else {
+      routeSource.setData(EMPTY_LINE)
+      map.setLayoutProperty('route', 'visibility', 'none')
+    }
+
     stopsSource.setData(stopsToFeatureCollection(stops))
 
     if (stops.length > 0) {
@@ -150,7 +154,7 @@ export default function MapView({ stops, routeGeoJson }: MapViewProps) {
     } else {
       map.flyTo({ center: [0, 20], zoom: 1.5, duration: 1000 })
     }
-  }, [stops, routeGeoJson])
+  }, [stops, routeGeoJson, isRealRoute])
 
   return <div ref={containerRef} className="w-full h-full" />
 }
