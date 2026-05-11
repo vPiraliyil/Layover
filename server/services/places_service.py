@@ -187,6 +187,20 @@ async def get_pois_for_itinerary(
     return await fetch_pois_from_places(airport_iata, terminal, preferences, db)
 
 
+async def get_cached_pois_for_airport(
+    airport_iata: str,
+    terminal: str,
+    db: AsyncSession,
+) -> list[dict]:
+    result = await db.execute(
+        select(POI).where(
+            POI.airport_iata == airport_iata.upper(),
+            POI.terminal == terminal,
+        )
+    )
+    return [_poi_to_dict(p) for p in result.scalars().all()]
+
+
 def _poi_to_dict(poi: POI) -> dict:
     return {
         "id": str(poi.id),

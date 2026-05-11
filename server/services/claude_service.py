@@ -52,18 +52,25 @@ Other rules:
 - Ensure stop_number is sequential starting at 1.
 """
 
-PATCH_SYSTEM_PROMPT = f"""You are an airport layover itinerary editor.
+def _build_patch_system_prompt(pois: list[dict]) -> str:
+    pois_json = json.dumps(pois, indent=2)
+    return f"""You are an airport layover itinerary editor.
 
 You will receive a current itinerary JSON array and a user request to modify it. Output ONLY the full updated JSON array.
 
+You have access to the following POIs available at this airport:
+{pois_json}
+
+When the user requests a change, pick the most relevant POI from this list. Only suggest places that exist in this list. Do not fabricate new locations.
+
 Rules:
 - Output ONLY the raw JSON array. No prose, no markdown fences, no extra keys, no explanation.
-- Apply the user's request to the current itinerary (add, remove, reorder, or modify stops as instructed).
+- Apply the user's request to the current itinerary (add, remove, swap, reorder, or modify stops as instructed).
+- When swapping a stop for a different type of place (e.g. "I want shawarma", "replace the bar with something quiet"), find the best matching POI in the list above and use its exact name, lat, and lng.
 - Preserve the exact schema for every stop:
 {STOP_SCHEMA}
 - Keep stop_number sequential starting at 1 after any changes.
 - Set walking_minutes_to_next to 0 for the last stop (it will be recalculated).
-- Only use POIs from the original list if adding stops. Do not fabricate new locations.
 """
 
 
@@ -133,6 +140,7 @@ def patch_itinerary(
     current_itinerary: list[dict],
     chat_history: list[dict],
     user_message: str,
+    pois: list[dict] | None = None,
 ) -> list[dict]:
     messages = list(chat_history)
     messages.append({
@@ -143,10 +151,12 @@ def patch_itinerary(
         ),
     })
 
+    system_prompt = _build_patch_system_prompt(pois or [])
+
     response = _client().messages.create(
         model=MODEL,
         max_tokens=2048,
-        system=PATCH_SYSTEM_PROMPT,
+        system=system_prompt,
         messages=messages,
     )
 

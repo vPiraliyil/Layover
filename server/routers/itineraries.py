@@ -11,7 +11,7 @@ from middleware.auth import optional_user
 from models import ChatMessage, Itinerary, MessageRole
 from services.claude_service import generate_itinerary, patch_itinerary
 from services.directions_service import get_route_geojson, get_walking_legs
-from services.places_service import get_pois_for_itinerary
+from services.places_service import get_cached_pois_for_airport, get_pois_for_itinerary
 from services.scheduler_service import SchedulingError, schedule_itinerary
 
 logger = logging.getLogger(__name__)
@@ -131,13 +131,15 @@ async def patch_itinerary_route(
     chat_rows = result.scalars().all()
     chat_history = [{"role": row.role.value, "content": row.content} for row in chat_rows]
 
-    logger.info("Patch: itinerary=%s, history_len=%d, message=%r", itinerary_id, len(chat_history), body.user_message)
+    pois = await get_cached_pois_for_airport(itinerary_row.airport_iata, itinerary_row.terminal, db)
+    logger.info("Patch: itinerary=%s, history_len=%d, pois=%d, message=%r", itinerary_id, len(chat_history), len(pois), body.user_message)
 
     try:
         updated_stops = patch_itinerary(
             itinerary_row.itinerary_json,
             chat_history,
             body.user_message,
+            pois,
         )
     except ValueError as exc:
         logger.error("Claude patch failed: %s", exc)
