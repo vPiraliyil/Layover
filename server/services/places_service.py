@@ -65,7 +65,7 @@ async def fetch_pois_from_places(
                 continue
 
             query_term = PREF_QUERY_TERM[pref]
-            text_query = f"{query_term} inside {airport_name} {terminal} terminal airside"
+            text_query = f"{iata} Terminal {terminal} {query_term} airside"
 
             body: dict = {
                 "textQuery": text_query,
@@ -86,10 +86,27 @@ async def fetch_pois_from_places(
 
             places = resp.json().get("places", [])
 
+            # Drop results whose name or address explicitly mentions a different terminal
+            other_terminal_markers = [
+                f"Terminal {t}" for t in ["1", "2", "3", "4", "5", "A", "B", "C", "D", "E"]
+                if t != terminal
+            ]
+
+            def _mentions_wrong_terminal(place: dict) -> bool:
+                text = (
+                    (place.get("displayName", {}).get("text") or "") + " " +
+                    (place.get("formattedAddress") or "")
+                ).lower()
+                return any(marker.lower() in text for marker in other_terminal_markers)
+
             pref_start = len(rows)
             for place in places:
                 pid = place.get("id")
                 if not pid or pid in seen:
+                    continue
+
+                if _mentions_wrong_terminal(place):
+                    logger.debug("Filtered wrong-terminal result: %s", place.get("displayName", {}).get("text"))
                     continue
 
                 loc = place.get("location", {})

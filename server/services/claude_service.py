@@ -22,9 +22,14 @@ STOP_SCHEMA = """
 }
 """
 
-def _build_generate_system_prompt(required_prefs: list[str]) -> str:
+def _build_generate_system_prompt(required_prefs: list[str], terminal: str) -> str:
     prefs_str = ", ".join(required_prefs)
     return f"""You are an airport layover itinerary planner.
+
+HARD RULES — never violate these:
+- Maximum 1 stop per category. If preferences are [{prefs_str}], return exactly 1 stop per preference category. Never return 2 food stops or 2 drinks stops.
+- All stops must be in Terminal {terminal}. Reject any POI whose name or address mentions a different terminal number.
+- Only use POIs from the provided list. Never invent locations.
 
 CRITICAL RULE: Every stop MUST be physically located inside the airport terminal. Do not suggest any location that requires leaving the secure airside area, going outdoors, or travelling to a different terminal. If no suitable POI exists in the provided list for a category, skip that category rather than suggesting an outside location.
 
@@ -36,7 +41,7 @@ STOP COUNT — non-negotiable based on layover duration:
 - 151+ min layover: exactly 4 stops
 
 REQUIRED PREFERENCES — non-negotiable:
-You MUST include exactly one stop for each of the following preferences: {prefs_str}. This is non-negotiable. If you cannot find a perfect match for a preference in the POI list, include the best available POI from the provided list anyway. Never omit a required preference category from the output.
+You MUST include exactly one stop for each of the following preferences: {prefs_str}. Never include more than one stop with the same category.
 
 CATEGORY DIVERSITY — non-negotiable:
 - Maximum 1 stop per category. Never pick two restaurants, two bars, two shops, etc.
@@ -44,11 +49,9 @@ CATEGORY DIVERSITY — non-negotiable:
 - Every stop must feel meaningfully different from the others.
 
 Other rules:
-- All stops must be inside the airport terminal. Never suggest locations that require leaving the secure area or going outdoors.
 - Output ONLY the raw JSON array. No prose, no markdown fences, no extra keys, no explanation.
 - Each element must exactly match this schema:
 {STOP_SCHEMA}
-- Only use locations from the provided POI list. Do not fabricate places.
 - Set walking_minutes_to_next to 0 for the last stop (filled in later by the directions service).
 - Use realistic duration_minutes (15–45 min per stop).
 - Ensure stop_number is sequential starting at 1.
@@ -86,6 +89,7 @@ def generate_itinerary(
     pois: list[dict],
     preferences: list[str],
     duration_minutes: int,
+    terminal: str = "",
     gate: str | None = None,
 ) -> list[dict]:
     # Determine which preferences have POIs available — skip those that don't
@@ -113,7 +117,7 @@ def generate_itinerary(
     response = _client().messages.create(
         model=MODEL,
         max_tokens=2048,
-        system=_build_generate_system_prompt(required_prefs),
+        system=_build_generate_system_prompt(required_prefs, terminal),
         messages=[{"role": "user", "content": user_message}],
     )
 

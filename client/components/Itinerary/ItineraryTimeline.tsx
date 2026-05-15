@@ -114,9 +114,10 @@ export default function ItineraryTimeline({ stops, tsaBufferMinutes = 30 }: Prop
           </div>
           <div className="flex-1 rounded-xl border-2 border-red-200 bg-red-50 p-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-red-700">🛡 Return to Security</span>
+              <span className="text-sm font-medium text-red-700">🛡 Return to Gate</span>
               <span className="text-xs text-red-500">{tsaBufferMinutes} min</span>
             </div>
+            <p className="text-xs text-red-400 mt-1">Allow extra time to locate your gate.</p>
           </div>
         </div>
       )}

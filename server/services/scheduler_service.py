@@ -1,10 +1,41 @@
 import logging
+from collections import Counter
 
 logger = logging.getLogger(__name__)
 
 
 class SchedulingError(Exception):
     pass
+
+
+def deduplicate_stops(stops: list[dict], preferences: list[str]) -> list[dict]:
+    category_counts = Counter(s.get("category") for s in stops)
+    dup_categories = {cat for cat, count in category_counts.items() if count > 1}
+    if not dup_categories:
+        return stops
+
+    use_distance = "walking" in (preferences or [])
+    ordered = sorted(stops, key=lambda s: s.get("stop_number", 0))
+
+    for cat in dup_categories:
+        dups = [s for s in ordered if s.get("category") == cat]
+
+        if use_distance:
+            first_idx = next(i for i, s in enumerate(ordered) if s.get("category") == cat)
+            others = [s for s in ordered if s.get("category") != cat]
+            ref = ordered[first_idx - 1] if first_idx > 0 else (others[0] if others else dups[0])
+            best = max(dups, key=lambda s: (s["lat"] - ref["lat"]) ** 2 + (s["lng"] - ref["lng"]) ** 2)
+        else:
+            best = max(dups, key=lambda s: s.get("rating") or 0.0)
+
+        for dup in dups:
+            if dup is not best:
+                ordered.remove(dup)
+
+    for i, stop in enumerate(ordered, start=1):
+        stop["stop_number"] = i
+
+    return ordered
 
 
 def schedule_itinerary(

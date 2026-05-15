@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import ItineraryForm from '@/components/Itinerary/ItineraryForm'
 import ItineraryTimeline from '@/components/Itinerary/ItineraryTimeline'
 import ChatPanel from '@/components/Chat/ChatPanel'
+import { fetchAPI } from '@/lib/api'
 import type { ItineraryStop } from '@/lib/types'
 
 const MapView = dynamic(() => import('@/components/Map/MapView'), { ssr: false })
@@ -18,6 +20,22 @@ interface ItineraryState {
 
 export default function AppPage() {
   const [itinerary, setItinerary] = useState<ItineraryState | null>(null)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const id = searchParams.get('itinerary')
+    if (!id) return
+    fetchAPI<{ id: string; stops: ItineraryStop[]; route_geojson: GeoJSON.LineString | null }>(
+      `/itineraries/${id}`
+    ).then(data => {
+      setItinerary({
+        id: data.id,
+        stops: data.stops,
+        routeGeoJson: data.route_geojson,
+        isRealRoute: !!data.route_geojson,
+      })
+    }).catch(() => {})
+  }, [])
 
   function handleItineraryGenerated(data: {
     id: string
@@ -38,7 +56,7 @@ export default function AppPage() {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-full w-full overflow-hidden">
       {/* Left panel */}
       <div className="w-[40%] h-full bg-white border-r border-gray-200 flex flex-col overflow-hidden">
         {itinerary ? (

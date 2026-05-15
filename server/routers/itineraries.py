@@ -7,12 +7,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from middleware.auth import optional_user
+from middleware.auth import optional_user, require_user
 from models import ChatMessage, Itinerary, MessageRole
 from services.claude_service import generate_itinerary, patch_itinerary
 from services.directions_service import get_route_geojson, get_walking_legs
 from services.places_service import get_cached_pois_for_airport, get_pois_for_itinerary
-from services.scheduler_service import SchedulingError, schedule_itinerary
+from services.scheduler_service import SchedulingError, deduplicate_stops, schedule_itinerary
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -56,12 +56,18 @@ async def create_itinerary(
         raise HTTPException(status_code=404, detail="No POIs found for this airport and preferences")
 
     try:
-        stops = generate_itinerary(pois, preferences, duration_minutes, gate)
+        stops = generate_itinerary(pois, preferences, duration_minutes, terminal, gate)
     except ValueError as exc:
         logger.error("Claude generation failed: %s", exc)
         raise HTTPException(status_code=502, detail=str(exc))
 
     logger.info("Claude returned %d stops", len(stops))
+
+    before = len(stops)
+    stops = deduplicate_stops(stops, preferences)
+    removed = before - len(stops)
+    if removed:
+        logger.info("Removed %d duplicate stops before scheduling", removed)
 
     stops = await get_walking_legs(stops)
 
@@ -105,6 +111,51 @@ async def create_itinerary(
         "stops": stops,
         "route_geojson": route_geojson,
         "is_real_route": is_real_route,
+    }
+
+
+@router.get("/my")
+async def get_my_itineraries(
+    db: AsyncSession = Depends(get_db),
+    user: dict = Depends(require_user),
+):
+    user_uuid = uuid.UUID(user["sub"])
+    result = await db.execute(
+        select(Itinerary)
+        .where(Itinerary.user_id == user_uuid)
+        .order_by(Itinerary.created_at.desc())
+    )
+    rows = result.scalars().all()
+    return [
+        {
+            "id": str(row.id),
+            "airport_iata": row.airport_iata,
+            "terminal": row.terminal,
+            "duration_minutes": row.duration_minutes,
+            "preferences": row.preferences,
+            "created_at": row.created_at.isoformat(),
+            "preview_stop": row.itinerary_json[0]["name"] if row.itinerary_json else "",
+        }
+        for row in rows
+    ]
+
+
+@router.get("/{itinerary_id}")
+async def get_itinerary(
+    itinerary_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        itin_uuid = uuid.UUID(itinerary_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid itinerary ID")
+    row = await db.get(Itinerary, itin_uuid)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Itinerary not found")
+    return {
+        "id": str(row.id),
+        "stops": row.itinerary_json,
+        "route_geojson": row.route_geojson,
     }
 
 

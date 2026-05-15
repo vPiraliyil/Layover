@@ -41,6 +41,16 @@ export interface Itinerary {
   updated_at: string
 }
 
+export interface ItineraryHistoryItem {
+  id: string
+  airport_iata: string
+  terminal: string
+  duration_minutes: number
+  preferences: string[]
+  created_at: string
+  preview_stop: string
+}
+
 export interface ChatMessage {
   id: string
   itinerary_id: string
