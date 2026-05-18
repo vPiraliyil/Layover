@@ -20,6 +20,7 @@ interface ItineraryState {
 
 export default function AppPage() {
   const [itinerary, setItinerary] = useState<ItineraryState | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -34,7 +35,9 @@ export default function AppPage() {
         routeGeoJson: data.route_geojson,
         isRealRoute: !!data.route_geojson,
       })
-    }).catch(() => {})
+    }).catch(() => {
+      setLoadError('Could not load itinerary. Starting fresh.')
+    })
   }, [])
 
   function handleItineraryGenerated(data: {
@@ -78,7 +81,10 @@ export default function AppPage() {
             />
           </>
         ) : (
-          <div className="flex-1 flex items-start justify-center pt-10">
+          <div className="flex-1 flex flex-col items-center pt-10">
+            {loadError && (
+              <p className="text-sm text-red-500 mb-4 px-6">{loadError}</p>
+            )}
             <ItineraryForm onItineraryGenerated={handleItineraryGenerated} />
           </div>
         )}
