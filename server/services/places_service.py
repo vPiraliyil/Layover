@@ -69,7 +69,7 @@ async def fetch_pois_from_places(
 
             body: dict = {
                 "textQuery": text_query,
-                "locationRestriction": {
+                "locationBias": {
                     "circle": {
                         "center": {"latitude": lat, "longitude": lng},
                         "radius": 800.0,
