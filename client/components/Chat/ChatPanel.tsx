@@ -44,7 +44,7 @@ export default function ChatPanel({ itineraryId, onItineraryPatched }: ChatPanel
     setMessages(prev => [
       ...prev,
       { role: 'user', content: text },
-      { role: 'assistant', content: '...', isLoading: true },
+      { role: 'assistant', content: '', isLoading: true },
     ])
 
     try {
@@ -84,7 +84,7 @@ export default function ChatPanel({ itineraryId, onItineraryPatched }: ChatPanel
   }
 
   return (
-    <div className="flex flex-col border-t border-gray-200 bg-white" style={{ height: '320px' }}>
+    <div className="flex flex-col border-t border-gray-200 bg-white h-80">
       {/* Message history */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {messages.map((msg, i) => (
@@ -98,18 +98,27 @@ export default function ChatPanel({ itineraryId, onItineraryPatched }: ChatPanel
                     ? 'bg-red-50 text-red-700 border border-red-200'
                     : 'bg-gray-100 text-[#0A1628]'
                 }
-                ${msg.isLoading ? 'animate-pulse' : ''}
               `}
             >
-              {msg.content}
+              {msg.isLoading ? (
+                <div
+                  className="h-3 w-28 rounded-full animate-shimmer"
+                  style={{
+                    background: 'linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%)',
+                    backgroundSize: '800px 100%',
+                  }}
+                />
+              ) : (
+                msg.content
+              )}
             </div>
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
 
-      {/* Input row */}
-      <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100">
+      {/* Input row — sticky on mobile so it stays visible while scrolling the timeline */}
+      <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100 bg-white sticky bottom-0">
         <input
           type="text"
           value={inputValue}
@@ -117,12 +126,12 @@ export default function ChatPanel({ itineraryId, onItineraryPatched }: ChatPanel
           onKeyDown={handleKeyDown}
           disabled={isLoading}
           placeholder="Tweak your itinerary…"
-          className="flex-1 px-4 py-2 rounded-full border border-gray-200 text-sm text-[#0A1628] placeholder-gray-400 focus:outline-none focus:border-[#0066FF] disabled:opacity-50"
+          className="flex-1 px-4 py-2 rounded-full border border-gray-200 text-sm text-[#0A1628] placeholder-gray-400 focus:outline-none focus:border-[#0066FF] focus:ring-2 focus:ring-[#0066FF]/20 disabled:opacity-50 transition-colors"
         />
         <button
           onClick={handleSend}
           disabled={isLoading || !inputValue.trim()}
-          className="px-4 py-2 rounded-full bg-[#0066FF] text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2 rounded-full bg-[#0066FF] text-white text-sm font-medium hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-[#0066FF] focus-visible:ring-offset-2"
         >
           Send
         </button>

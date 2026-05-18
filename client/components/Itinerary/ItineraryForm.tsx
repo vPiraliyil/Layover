@@ -18,12 +18,31 @@ const PREF_OPTIONS = ['food', 'quiet', 'drinks', 'shopping', 'walking'] as const
 
 interface GenerateResponse {
   id: string
+  airport_iata: string
+  terminal: string
+  duration_minutes: number
   stops: ItineraryStop[]
   route_geojson: GeoJSON.LineString | null
+  is_real_route: boolean
 }
 
 interface Props {
   onItineraryGenerated: (result: GenerateResponse) => void
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="animate-spin h-4 w-4"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+    </svg>
+  )
 }
 
 export default function ItineraryForm({ onItineraryGenerated }: Props) {
@@ -82,6 +101,8 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
     }
   }
 
+  const inputBase = 'w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#0A1628] bg-white focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-opacity'
+
   return (
     <form onSubmit={handleSubmit} className="p-6 w-full space-y-5">
       <div>
@@ -99,7 +120,8 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
           <select
             value={airport}
             onChange={e => setAirport(e.target.value)}
-            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#0A1628] bg-white focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+            disabled={submitting}
+            className={inputBase}
           >
             <option value="">Select airport…</option>
             {airports.map(a => (
@@ -117,8 +139,9 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
           type="text"
           value={terminal}
           onChange={e => setTerminal(e.target.value)}
+          disabled={submitting}
           placeholder="e.g. Terminal 1"
-          className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#0A1628] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+          className={`${inputBase} placeholder-gray-300`}
         />
       </div>
 
@@ -128,8 +151,9 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
           type="text"
           value={gate}
           onChange={e => setGate(e.target.value)}
+          disabled={submitting}
           placeholder="e.g. Gate B12 (optional)"
-          className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#0A1628] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+          className={`${inputBase} placeholder-gray-300`}
         />
       </div>
 
@@ -138,7 +162,8 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
         <select
           value={duration}
           onChange={e => setDuration(Number(e.target.value))}
-          className="w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm text-[#0A1628] bg-white focus:outline-none focus:ring-2 focus:ring-[#0066FF] focus:border-transparent"
+          disabled={submitting}
+          className={inputBase}
         >
           {DURATION_OPTIONS.map(o => (
             <option key={o.value} value={o.value}>
@@ -161,7 +186,8 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
                 key={p}
                 type="button"
                 onClick={() => togglePref(p)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                disabled={submitting}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066FF] focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed ${
                   selected
                     ? 'bg-[#0066FF] text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -175,17 +201,25 @@ export default function ItineraryForm({ onItineraryGenerated }: Props) {
       </div>
 
       {error && (
-        <p className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-          {error}
-        </p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-sm text-red-700 font-medium">We couldn&apos;t generate your itinerary.</p>
+          <p className="text-sm text-red-500 mt-1">Check your inputs and try again.</p>
+        </div>
       )}
 
       <button
         type="submit"
         disabled={!canSubmit}
-        className="w-full bg-[#0066FF] hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg text-sm transition-colors"
+        className={`w-full bg-[#0066FF] hover:bg-blue-700 active:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg text-sm transition-colors focus-visible:ring-2 focus-visible:ring-[#0066FF] focus-visible:ring-offset-2 flex items-center justify-center gap-2 ${submitting ? 'animate-pulse' : ''}`}
       >
-        {submitting ? 'Generating…' : 'Generate Itinerary'}
+        {submitting ? (
+          <>
+            <Spinner />
+            Generating your itinerary…
+          </>
+        ) : (
+          'Generate Itinerary'
+        )}
       </button>
     </form>
   )

@@ -154,6 +154,9 @@ async def get_itinerary(
         raise HTTPException(status_code=404, detail="Itinerary not found")
     return {
         "id": str(row.id),
+        "airport_iata": row.airport_iata,
+        "terminal": row.terminal,
+        "duration_minutes": row.duration_minutes,
         "stops": row.itinerary_json,
         "route_geojson": row.route_geojson,
     }

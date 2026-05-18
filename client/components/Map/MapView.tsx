@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import type { ItineraryStop } from '@/lib/types'
 
@@ -26,8 +26,9 @@ function stopsToFeatureCollection(
 ): GeoJSON.FeatureCollection<GeoJSON.Point> {
   return {
     type: 'FeatureCollection',
-    features: stops.map((s) => ({
+    features: stops.map((s, idx) => ({
       type: 'Feature',
+      id: idx,
       properties: {
         stop_number: s.stop_number,
         name: s.name,
@@ -42,22 +43,31 @@ function stopsToFeatureCollection(
 export default function MapView({ stops, routeGeoJson, isRealRoute }: MapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
+  const hoveredIdRef = useRef<number | null>(null)
+  const [mapError, setMapError] = useState(false)
 
   useEffect(() => {
     if (!containerRef.current) return
 
-    console.log('[MapView] token prefix:', process.env.NEXT_PUBLIC_MAPBOX_TOKEN?.slice(0, 8))
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ?? ''
 
-    const map = new mapboxgl.Map({
-      container: containerRef.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [0, 20],
-      zoom: 1.5,
-      scrollZoom: false,
-    })
+    let map: mapboxgl.Map
+    try {
+      map = new mapboxgl.Map({
+        container: containerRef.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [0, 20],
+        zoom: 1.5,
+        scrollZoom: false,
+      })
+    } catch {
+      setMapError(true)
+      return
+    }
 
     map.addControl(new mapboxgl.NavigationControl(), 'top-right')
+
+    map.on('error', () => setMapError(true))
 
     map.on('load', () => {
       map.addSource('route', { type: 'geojson', data: EMPTY_LINE })
@@ -69,16 +79,22 @@ export default function MapView({ stops, routeGeoJson, isRealRoute }: MapViewPro
         paint: { 'line-color': '#0066FF', 'line-width': 4 },
       })
 
-      map.addSource('stops', { type: 'geojson', data: EMPTY_FC })
+      map.addSource('stops', { type: 'geojson', data: EMPTY_FC, generateId: true })
       map.addLayer({
         id: 'stops-circle',
         type: 'circle',
         source: 'stops',
         paint: {
-          'circle-radius': 14,
+          'circle-radius': [
+            'case',
+            ['boolean', ['feature-state', 'hover'], false],
+            17,
+            14,
+          ],
           'circle-color': '#ffffff',
           'circle-stroke-color': '#0066FF',
           'circle-stroke-width': 2,
+          'circle-radius-transition': { duration: 150 },
         },
       })
       map.addLayer({
@@ -114,11 +130,23 @@ export default function MapView({ stops, routeGeoJson, isRealRoute }: MapViewPro
           .addTo(map)
       })
 
-      map.on('mouseenter', 'stops-circle', () => {
+      map.on('mouseenter', 'stops-circle', (e) => {
         map.getCanvas().style.cursor = 'pointer'
+        const id = e.features?.[0]?.id
+        if (typeof id === 'number') {
+          if (hoveredIdRef.current !== null) {
+            map.setFeatureState({ source: 'stops', id: hoveredIdRef.current }, { hover: false })
+          }
+          hoveredIdRef.current = id
+          map.setFeatureState({ source: 'stops', id }, { hover: true })
+        }
       })
       map.on('mouseleave', 'stops-circle', () => {
         map.getCanvas().style.cursor = ''
+        if (hoveredIdRef.current !== null) {
+          map.setFeatureState({ source: 'stops', id: hoveredIdRef.current }, { hover: false })
+          hoveredIdRef.current = null
+        }
       })
     })
 
@@ -156,5 +184,24 @@ export default function MapView({ stops, routeGeoJson, isRealRoute }: MapViewPro
     }
   }, [stops, routeGeoJson, isRealRoute])
 
-  return <div ref={containerRef} className="w-full h-full" />
+  if (mapError) {
+    return (
+      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+        <p className="text-sm text-gray-400">Map unavailable</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full" />
+      {stops.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <p className="text-sm text-gray-500 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm">
+            Your route will appear here
+          </p>
+        </div>
+      )}
+    </div>
+  )
 }

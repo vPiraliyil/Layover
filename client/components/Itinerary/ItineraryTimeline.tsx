@@ -24,7 +24,6 @@ const CATEGORY_COLORS: Record<string, string> = {
 export default function ItineraryTimeline({ stops, tsaBufferMinutes = 30 }: Props) {
   const startMs = Date.now()
 
-  // Compute arrival time for each stop by accumulating durations + walking legs
   const arrivalTimes: Date[] = []
   let cursor = startMs
   for (let i = 0; i < stops.length; i++) {
@@ -41,7 +40,11 @@ export default function ItineraryTimeline({ stops, tsaBufferMinutes = 30 }: Prop
       <h2 className="text-base font-semibold text-[#0A1628] mb-5">Your itinerary</h2>
 
       {stops.map((stop, i) => (
-        <div key={stop.stop_number}>
+        <div
+          key={stop.stop_number}
+          className="animate-fade-in"
+          style={{ animationDelay: `${i * 50}ms` }}
+        >
           {/* Stop row */}
           <div className="flex gap-3 items-start">
             <div className="w-14 flex-none text-right pt-3">
@@ -99,7 +102,9 @@ export default function ItineraryTimeline({ stops, tsaBufferMinutes = 30 }: Prop
                     strokeDasharray="4 3"
                   />
                 </svg>
-                <span>🚶 {stop.walking_minutes_to_next} min walk</span>
+                <span aria-label={`${stop.walking_minutes_to_next} minute walk`}>
+                  🚶 {stop.walking_minutes_to_next} min walk
+                </span>
               </div>
             </div>
           )}
@@ -108,7 +113,10 @@ export default function ItineraryTimeline({ stops, tsaBufferMinutes = 30 }: Prop
 
       {/* TSA buffer sentinel — UI-only, never from stops array */}
       {stops.length > 0 && (
-        <div className="flex gap-3 items-start mt-1">
+        <div
+          className="flex gap-3 items-start mt-1 animate-fade-in"
+          style={{ animationDelay: `${stops.length * 50}ms` }}
+        >
           <div className="w-14 flex-none text-right pt-3">
             <span className="text-xs text-gray-400 leading-none">{formatTime(tsaTime)}</span>
           </div>

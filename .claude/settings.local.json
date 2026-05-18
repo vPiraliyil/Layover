@@ -63,7 +63,9 @@
       "Bash(.venv/Scripts/uvicorn main:app --port 8001)",
       "Bash(.venv/Scripts/python.exe -c \"import sys,json; [print\\(p\\) for p in json.load\\(sys.stdin\\)['paths'].keys\\(\\)]\")",
       "Bash(python.exe -c \"import urllib.request,json; d=json.load\\(urllib.request.urlopen\\('http://localhost:8001/openapi.json'\\)\\); [print\\(p\\) for p in d['paths'].keys\\(\\)]\")",
-      "Bash(python3 -c \"import json; resp = {'detail': 'No POIs found for this airport and preferences'}; print\\(json.dumps\\(resp\\)\\)\")"
+      "Bash(python3 -c \"import json; resp = {'detail': 'No POIs found for this airport and preferences'}; print\\(json.dumps\\(resp\\)\\)\")",
+      "Bash(Find-ChildItem -Path \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\client\" -Type Directory)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

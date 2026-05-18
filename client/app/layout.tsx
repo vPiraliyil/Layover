@@ -5,7 +5,7 @@ import Providers from "./providers";
 import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Layover",
+  title: { template: '%s | Layover', default: 'Layover' },
   description: "Airport layover itinerary generator",
 };
 
