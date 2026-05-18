@@ -21,6 +21,10 @@ client/.next/
 client/out/
 client/node_modules/
 
+# Root dev tooling
+node_modules/
+package-lock.json
+
 # OS
 .DS_Store
 Thumbs.db

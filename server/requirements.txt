@@ -9,3 +9,4 @@ python-dotenv
 httpx
 anthropic
 python-jose[cryptography]
+PyJWT[cryptography]

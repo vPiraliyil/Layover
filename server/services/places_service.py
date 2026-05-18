@@ -65,14 +65,14 @@ async def fetch_pois_from_places(
                 continue
 
             query_term = PREF_QUERY_TERM[pref]
-            text_query = f"{iata} Terminal {terminal} {query_term} airside"
+            text_query = f"{airport_name} Terminal {terminal} {query_term}"
 
             body: dict = {
                 "textQuery": text_query,
                 "locationRestriction": {
                     "circle": {
                         "center": {"latitude": lat, "longitude": lng},
-                        "radius": 500.0,
+                        "radius": 800.0,
                     }
                 },
                 "maxResultCount": 20,

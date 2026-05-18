@@ -11,8 +11,15 @@ export async function fetchAPI<T = unknown>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  console.log('[api] base URL:', process.env.NEXT_PUBLIC_API_URL, '| path:', path)
-  const { data: { session } } = await supabase.auth.getSession()
+  let { data: { session } } = await supabase.auth.getSession()
+
+  if (session && session.expires_at && session.expires_at < Math.floor(Date.now() / 1000)) {
+    console.log('[api] session expired, refreshing...')
+    const { data } = await supabase.auth.refreshSession()
+    session = data.session
+  }
+
+  console.log(`[api] ${options.method ?? 'GET'} ${path} | session:`, session ? `found (user: ${session.user?.email}, expires_at: ${session.expires_at})` : 'null — sending unauthenticated')
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -30,6 +37,7 @@ export async function fetchAPI<T = unknown>(
 
   if (!res.ok) {
     const body = await res.text()
+    console.error(`[api] ${res.status} on ${path}:`, body)
     throw new APIError(res.status, body)
   }
 
