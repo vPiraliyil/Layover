@@ -65,7 +65,9 @@
       "Bash(python.exe -c \"import urllib.request,json; d=json.load\\(urllib.request.urlopen\\('http://localhost:8001/openapi.json'\\)\\); [print\\(p\\) for p in d['paths'].keys\\(\\)]\")",
       "Bash(python3 -c \"import json; resp = {'detail': 'No POIs found for this airport and preferences'}; print\\(json.dumps\\(resp\\)\\)\")",
       "Bash(Find-ChildItem -Path \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\client\" -Type Directory)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\server\" -Name | Where-Object { $_ -notmatch \"\\\\.venv|__pycache__\" })",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\client\\\\app\" -Recurse -Name | Where-Object { $_ -match \"\\\\.tsx$\" })"
     ]
   }
 }

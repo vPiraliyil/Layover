@@ -275,7 +275,7 @@ Lives in `server/services/scheduler_service.py` as a pure function module. Recei
 
 ### Mapbox GL JS (client-side)
 - Public token only: `NEXT_PUBLIC_MAPBOX_TOKEN` — never the secret token
-- Map style: `mapbox://styles/mapbox/light-v11`
+- Map style: `mapbox://styles/mapbox/dark-v11`
 - Route: `map.addSource('route', { type: 'geojson', data: lineStringGeoJSON })` + `map.addLayer({ id: 'route', type: 'line', paint: { 'line-color': '#0066FF', 'line-width': 4 }, layout: { 'line-cap': 'round', 'line-join': 'round' } })`
 - Stops: `map.addSource('stops', GeoJSON FeatureCollection)` + circle layer (white fill, `#0066FF` stroke, radius 14) + symbol layer (stop number label)
 - On patch update: `map.getSource('route').setData(newGeoJSON)` and `map.getSource('stops').setData(newFeatureCollection)` — never remove and re-add layers
@@ -293,7 +293,7 @@ Lives in `server/services/scheduler_service.py` as a pure function module. Recei
 
 Split screen layout. Left panel (40% width): input form on first load; replaced by itinerary timeline + chat panel after generation. Right panel (60% width): Mapbox map, full height.
 
-Light theme. Background `#F8F9FA`, navy text `#0A1628`, accent `#0066FF`. Map style `mapbox://styles/mapbox/light-v11`. Route line `#0066FF`, 4px, `line-cap: round`, `line-join: round`. Subtle animated dash offset on the route line for a travel feel.
+Light theme. Background `#F8F9FA`, navy text `#0A1628`, accent `#0066FF`. Map style `mapbox://styles/mapbox/dark-v11`. Route line `#0066FF`, 4px, `line-cap: round`, `line-join: round`. Subtle animated dash offset on the route line for a travel feel.
 
 Stop markers: white circles, navy number, `#0066FF` border. Active marker: solid `#0066FF` fill, white number. Clicking a marker opens a Mapbox popup with stop name, category badge, and duration.
 
