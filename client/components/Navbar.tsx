@@ -10,39 +10,38 @@ export default function Navbar() {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
 
-  // Close drawer on route change
   useEffect(() => { setMenuOpen(false) }, [pathname])
 
   return (
-    <nav className="flex-shrink-0 bg-white border-b border-gray-200 relative z-50">
+    <nav className="flex-shrink-0 bg-[#0A0A0A] border-b border-[#2A2A2A] relative z-50">
       <div className="h-14 flex items-center justify-between px-6">
-        <Link href="/" className="text-[#0A1628] font-bold text-lg tracking-tight">
+        <Link href="/" className="font-bold text-lg tracking-tight text-white">
           Layover
         </Link>
 
         {/* Desktop nav */}
-        <div className="hidden md:flex items-center gap-4 text-sm">
+        <div className="hidden md:flex items-center gap-5 text-sm">
           {user ? (
             <>
-              <Link href="/history" className="text-[#0A1628] hover:text-[#0066FF] transition-colors">
+              <Link href="/history" className="nav-link text-[#888888] hover:text-white transition-colors">
                 My Itineraries
               </Link>
-              <span className="text-gray-400">{user.email}</span>
+              <span className="text-[#555555] text-xs">{user.email}</span>
               <button
                 onClick={signOut}
-                className="text-gray-500 hover:text-[#0A1628] active:text-gray-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066FF] rounded"
+                className="text-white border border-[#2A2A2A] hover:bg-[#141414] transition-colors px-3 py-1.5 rounded-md text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066FF]"
               >
                 Sign out
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className="text-[#0A1628] hover:text-[#0066FF] transition-colors">
+              <Link href="/login" className="nav-link text-[#888888] hover:text-white transition-colors">
                 Log in
               </Link>
               <Link
                 href="/register"
-                className="bg-[#0066FF] text-white px-4 py-1.5 rounded-md hover:bg-blue-700 active:bg-blue-800 transition-colors focus-visible:ring-2 focus-visible:ring-[#0066FF] focus-visible:ring-offset-2"
+                className="bg-[#0066FF] hover:bg-[#0052CC] text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-[#0066FF] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A]"
               >
                 Sign up
               </Link>
@@ -53,7 +52,7 @@ export default function Navbar() {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMenuOpen(o => !o)}
-          className="md:hidden p-2 rounded-md text-[#0A1628] hover:bg-gray-100 active:bg-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066FF]"
+          className="md:hidden p-2 rounded-md text-[#888888] hover:text-white hover:bg-[#141414] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0066FF]"
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={menuOpen}
         >
@@ -71,26 +70,26 @@ export default function Navbar() {
 
       {/* Mobile slide-down drawer */}
       {menuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-6 py-4 flex flex-col gap-4 text-sm">
+        <div className="md:hidden border-t border-[#2A2A2A] bg-[#0A0A0A] px-6 py-4 flex flex-col gap-4 text-sm">
           {user ? (
             <>
-              <Link href="/history" className="text-[#0A1628] hover:text-[#0066FF] transition-colors">
+              <Link href="/history" className="text-[#888888] hover:text-white transition-colors">
                 My Itineraries
               </Link>
-              <span className="text-gray-400 text-xs">{user.email}</span>
+              <span className="text-[#555555] text-xs">{user.email}</span>
               <button
                 onClick={signOut}
-                className="text-left text-gray-500 hover:text-[#0A1628] transition-colors"
+                className="text-left text-[#888888] hover:text-white transition-colors"
               >
                 Sign out
               </button>
             </>
           ) : (
             <>
-              <Link href="/login" className="text-[#0A1628] hover:text-[#0066FF] transition-colors">
+              <Link href="/login" className="text-[#888888] hover:text-white transition-colors">
                 Log in
               </Link>
-              <Link href="/register" className="text-[#0066FF] font-medium">
+              <Link href="/register" className="text-white font-medium">
                 Sign up
               </Link>
             </>

@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 body {
-  color: #0A1628;
-  background: #F8F9FA;
+  color: #FFFFFF;
+  background: #0A0A0A;
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -14,12 +14,49 @@ body {
   }
 }
 
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Nav link hover underline */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: #FFFFFF;
+  transition: width 0.2s ease;
+}
+.nav-link:hover::after {
+  width: 100%;
 }
 
-@keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position:  400px 0; }
+/* Chat bubble border radii */
+.rounded-chat-user {
+  border-radius: 16px 16px 4px 16px;
+}
+.rounded-chat-assistant {
+  border-radius: 16px 16px 16px 4px;
+}
+
+/* Dark-theme Mapbox popups */
+.mapboxgl-popup-content {
+  background: #1C1C1C;
+  border: 1px solid #2A2A2A;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  padding: 12px;
+  color: #FFFFFF;
+}
+.mapboxgl-popup-tip {
+  border-top-color: #1C1C1C;
+  border-bottom-color: #1C1C1C;
+}
+.mapboxgl-popup-close-button {
+  color: #888888;
+}
+.mapboxgl-popup-close-button:hover {
+  color: #FFFFFF;
+  background: transparent;
 }
