@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -60,7 +60,7 @@ const panelAnimate = { opacity: 1, y: 0 }
 const panelExit    = { opacity: 0, y: -6 }
 const panelTransition = { duration: 0.3, ease: 'easeOut' as const }
 
-export default function AppPage() {
+function AppPageContent() {
   const [itinerary, setItinerary] = useState<ItineraryState | null>(null)
   const [loadingParam, setLoadingParam] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -177,5 +177,13 @@ export default function AppPage() {
         />
       </div>
     </div>
+  )
+}
+
+export default function AppPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#0A0A0A] text-white">Loading...</div>}>
+      <AppPageContent />
+    </Suspense>
   )
 }
