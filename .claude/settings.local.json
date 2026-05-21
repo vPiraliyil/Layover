@@ -67,7 +67,10 @@
       "Bash(Find-ChildItem -Path \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\client\" -Type Directory)",
       "Bash(Select-Object FullName)",
       "PowerShell(Get-ChildItem \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\server\" -Name | Where-Object { $_ -notmatch \"\\\\.venv|__pycache__\" })",
-      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\client\\\\app\" -Recurse -Name | Where-Object { $_ -match \"\\\\.tsx$\" })"
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\vpira\\\\OneDrive\\\\Desktop\\\\Projects\\\\Layover\\\\client\\\\app\" -Recurse -Name | Where-Object { $_ -match \"\\\\.tsx$\" })",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git rm *)"
     ]
   }
 }
